@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Shop Sepatu</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .product-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            width: 150px;
+        }
+        .product-card img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+        .buy-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .cart-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            width: 300px;
+        }
+        .quantity-input {
+            width: 40px;
+            text-align: center;
+            margin-right: 5px;
+        }
+        .total-price {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .whatsapp-button {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Online Shop Sepatu</h1>
+    </header>
+    <main>
+        <div id="product-list" class="product-container"></div>
+        <div class="cart-container">
+            <h2>Keranjang Belanja</h2>
+            <ul id="cart-list"></ul>
+            <p class="total-price">Total: Rp <span id="total-price">0</span></p>
+            <button class="whatsapp-button" id="whatsapp-button" style="display: none;" onclick="sendToWhatsapp()">Beli via WhatsApp</button>
+        </div>
+    </main>
+    <script>
+        let cart = [];
+
+        function addToCart(product, quantity) {
+            quantity = parseInt(quantity) || 1;
+            let existingProduct = cart.find(item => item.name === product.name);
+            if (existingProduct) {
+                existingProduct.quantity += quantity;
+            } else {
+                cart.push({...product, quantity: quantity});
+            }
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartList = document.getElementById("cart-list");
+            const totalPriceElement = document.getElementById("total-price");
+            const whatsappButton = document.getElementById("whatsapp-button");
+            cartList.innerHTML = "";
+            let totalPrice = 0;
+            cart.forEach(item => {
+                const cartItem = document.createElement("li");
+                cartItem.textContent = `${item.name} - Rp ${item.harga} x ${item.quantity}`;
+                cartList.appendChild(cartItem);
+                totalPrice += item.harga * item.quantity;
+            });
+            totalPriceElement.textContent = totalPrice.toLocaleString("id-ID");
+
+            // Show WhatsApp button if cart is not empty
+            if (cart.length > 0) {
+                whatsappButton.style.display = "block";
+            } else {
+                whatsappButton.style.display = "none";
+            }
+        }
+
+        function sendToWhatsapp() {
+            let message = "Halo, saya ingin membeli barang-barang berikut:\n\n";
+            cart.forEach(item => {
+                message += `${item.quantity} buah ${item.name} - Rp ${item.harga} per buah\n`;
+            });
+            message += `\nTotal: Rp ${document.getElementById("total-price").textContent}`;
+
+            const whatsappUrl = `https://wa.me/6285737015379?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch("https://677bc1bb20824100c07ab0ff.mockapi.io/shoes")
+                .then(response => response.json())
+                .then(data => {
+                    const productList = document.getElementById("product-list");
+                    data.forEach(product => {
+                        const productCard = document.createElement("div");
+                        productCard.classList.add("product-card");
+                        productCard.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}">
+                            <h2>${product.name}</h2>
+                            <p>Harga: Rp ${product.harga}</p>
+                            <p>Warna: ${product.warna}</p>
+                            <input type="number" class="quantity-input" id="qty-${product.name}" min="1" value="1">
+                            <button class="buy-button" onclick='addToCart(${JSON.stringify(product)}, document.getElementById("qty-${product.name}").value)'>Beli</button>
+                        `;
+                        productList.appendChild(productCard);
+                    });
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        });
+    </script>
+</body>
+</html>
